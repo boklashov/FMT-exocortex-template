@@ -539,7 +539,7 @@ case "$1" in
 
         if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ] && [ "${IWE_SESSION_PREP_AUTO:-0}" = "1" ]; then
             log "Strategy day ($STRATEGY_DAY_NAME): running session prep"
-            run_claude "session-prep" "claude-sonnet-4-6"
+            run_claude "session-prep" "claude-sonnet-5"
             notify_telegram "session-prep"
         else
             # Canonical Day Open pipeline: deterministic scaffold (reads priorities.yaml,
@@ -563,7 +563,7 @@ case "$1" in
                 # instead of a generic "unavailable/failed". The delivery
                 # graph itself is WP-529 F7 scope, no silent bridge here.
                 log "WARN: Day Open pipeline not found at \$IWE_SCRIPTS or $WORKSPACE/scripts — canonical pipeline is not delivered on this install (WP-529 F7); fallback to free-form day-plan prompt"
-                run_claude "day-plan" "claude-sonnet-4-6"
+                run_claude "day-plan" "claude-sonnet-5"
                 notify_telegram "day-plan"
             elif bash "$DAY_OPEN_PIPELINE" >> "$LOG_FILE" 2>&1; then
                 log "Morning: Day Open pipeline OK (scaffold + llm-fill)"
@@ -583,12 +583,12 @@ case "$1" in
                         log "Morning: Day Open pipeline OK (scaffold only, no gateway)"
                     else
                         log "WARN: Day Open pipeline --scaffold-only also failed (see lines above in this log) — fallback to free-form day-plan prompt"
-                        run_claude "day-plan" "claude-sonnet-4-6"
+                        run_claude "day-plan" "claude-sonnet-5"
                         notify_telegram "day-plan"
                     fi
                 else
                     log "WARN: Day Open pipeline failed (see lines above in this log) — fallback to free-form day-plan prompt"
-                    run_claude "day-plan" "claude-sonnet-4-6"
+                    run_claude "day-plan" "claude-sonnet-5"
                     notify_telegram "day-plan"
                 fi
             fi
@@ -617,7 +617,7 @@ case "$1" in
         # transiently unavailable. Retry auth failures with backoff and leave a
         # status file so the morning traffic light can distinguish fresh from
         # stale failures.
-        run_claude_with_retry "week-review" "claude-opus-4-7" 3 60 300
+        run_claude_with_retry "week-review" "claude-opus-4-8" 3 60 300
         # Fallback push for Knowledge Index (week-review creates a post there)
         # KI_REPO may not exist for all users — guard with [ -d ]
         KI_REPO="$HOME/IWE/DS-Knowledge-Index"
@@ -628,12 +628,12 @@ case "$1" in
         ;;
     "session-prep")
         log "Manual: running session prep"
-        run_claude "session-prep" "claude-sonnet-4-6"
+        run_claude "session-prep" "claude-sonnet-5"
         notify_telegram "session-prep"
         ;;
     "day-plan")
         log "Manual: running day plan"
-        run_claude "day-plan" "claude-sonnet-4-6"
+        run_claude "day-plan" "claude-sonnet-5"
         notify_telegram "day-plan"
         ;;
     "note-review")
@@ -730,7 +730,7 @@ case "$1" in
         ;;
     "day-close")
         log "Manual: running day close"
-        run_claude "day-close" "claude-sonnet-4-6"
+        run_claude "day-close" "claude-sonnet-5"
         notify_telegram "day-close"
         ;;
     "strategy-session")
