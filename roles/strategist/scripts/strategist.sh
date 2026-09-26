@@ -520,7 +520,11 @@ esac
 case "$1" in
     "morning")
         # Определяем нужный сценарий: strategy_day → session-prep, иначе → day-plan
-        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ]; then
+        # L3 (2026-09-20): alarm-driven session-prep is off by default. The 04:00 run on
+        # strategy day drafted next week BEFORE the current week was closed. session-prep
+        # is now called from extensions/week-close.after.session-prep.md right after the
+        # week results are written. Restore the alarm: IWE_SESSION_PREP_AUTO=1.
+        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ] && [ "${IWE_SESSION_PREP_AUTO:-0}" = "1" ]; then
             SCENARIO="session-prep"
         else
             SCENARIO="day-plan"
@@ -533,7 +537,7 @@ case "$1" in
             exit 0
         fi
 
-        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ]; then
+        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ] && [ "${IWE_SESSION_PREP_AUTO:-0}" = "1" ]; then
             log "Strategy day ($STRATEGY_DAY_NAME): running session prep"
             run_claude "session-prep" "claude-sonnet-4-6"
             notify_telegram "session-prep"
