@@ -1454,7 +1454,11 @@ fi
 case "$1" in
     "morning")
         # Определяем нужный сценарий: strategy_day → session-prep, иначе → day-plan
-        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ]; then
+        # L3 (2026-09-20): alarm-driven session-prep is off by default. The 04:00 run on
+        # strategy day drafted next week BEFORE the current week was closed. session-prep
+        # is now called from extensions/week-close.after.session-prep.md right after the
+        # week results are written. Restore the alarm: IWE_SESSION_PREP_AUTO=1.
+        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ] && [ "${IWE_SESSION_PREP_AUTO:-0}" = "1" ]; then
             SCENARIO="session-prep"
         else
             SCENARIO="day-plan"
@@ -1476,9 +1480,13 @@ case "$1" in
         fi
         day_open_resume_pending_give_up
 
-        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ]; then
+        # L3 (2026-09-20): alarm-driven session-prep is off by default. The 04:00 run on
+        # strategy day drafted next week BEFORE the current week was closed. session-prep
+        # is now called from extensions/week-close.after.session-prep.md right after the
+        # week results are written. Restore the alarm: IWE_SESSION_PREP_AUTO=1.
+        if [ "$DAY_OF_WEEK" -eq "$STRATEGY_DAY_NUM" ] && [ "${IWE_SESSION_PREP_AUTO:-0}" = "1" ]; then
             log "Strategy day ($STRATEGY_DAY_NAME): running session prep"
-            run_claude "session-prep" "claude-sonnet-4-6"
+            run_claude "session-prep" "claude-opus-5-5"
             notify_telegram "session-prep"
         else
             # Canonical Day Open pipeline: deterministic scaffold (reads priorities.yaml,
@@ -1558,7 +1566,7 @@ case "$1" in
         # WP-561 Ф25: `set -e` would end the script silently on a failed run (no message at
         # all); keep the code, alarm the pilot, then exit with it.
         week_review_rc=0
-        run_claude_with_retry "week-review" "claude-opus-4-7" 3 60 300 || week_review_rc=$?
+        run_claude_with_retry "week-review" "claude-opus-5-5" 3 60 300 || week_review_rc=$?
         # Fallback push for Knowledge Index (week-review creates a post there)
         # KI_REPO may not exist for all users — guard with [ -d ]
         KI_REPO="$HOME/IWE/DS-Knowledge-Index"
@@ -1584,12 +1592,12 @@ case "$1" in
         ;;
     "session-prep")
         log "Manual: running session prep"
-        run_claude "session-prep" "claude-sonnet-4-6"
+        run_claude "session-prep" "claude-opus-5-5"
         notify_telegram "session-prep"
         ;;
     "day-plan")
         log "Manual: running day plan"
-        run_claude "day-plan" "claude-sonnet-4-6"
+        run_claude "day-plan" "claude-opus-5-5"
         notify_telegram "day-plan"
         ;;
     "note-review")
@@ -1611,13 +1619,13 @@ case "$1" in
         acquire_captures_write_lock || true
         if [ "$ISOLATED_RUN" = 1 ]; then
             note_review_rc=0
-            run_claude "note-review" "claude-haiku-4-5-20251001" || note_review_rc=$?
+            run_claude "note-review" "claude-opus-5-5" || note_review_rc=$?
             if [ "$note_review_rc" -ne 0 ]; then
                 log "ISOLATION: сбой запуска модели (rc=$note_review_rc), публикации нет, копия сохранена: $ISO_WORKTREE"
                 exit "$note_review_rc"
             fi
         else
-            run_claude "note-review" "claude-haiku-4-5-20251001"
+            run_claude "note-review" "claude-opus-5-5"
         fi
 
         # Canary: count bold notes after (needs to be visible for the alert further below)
@@ -1721,7 +1729,7 @@ case "$1" in
         ;;
     "day-close")
         log "Manual: running day close"
-        run_claude "day-close" "claude-sonnet-4-6"
+        run_claude "day-close" "claude-opus-5-5"
         notify_telegram "day-close"
         ;;
     "strategy-session")
